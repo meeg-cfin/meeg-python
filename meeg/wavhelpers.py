@@ -66,7 +66,7 @@ def load_stimuli(stimHz, audioSamplingRate, audStimDur_sec,
     try:
         retval = loadWavFromDisk(Hz=stimHz)
     except IOError:
-        "No WAV files found, creating stimuli..."
+        print("No WAV files found, creating stimuli...")
         audMask = np.ones(audStimDur_sec*audioSamplingRate)
         taperLenSamp = taperLenSec*audioSamplingRate
         taperF = 1./(taperLenSec * 2.)
