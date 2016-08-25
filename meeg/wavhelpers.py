@@ -7,6 +7,7 @@ from scipy.io.wavfile import write as wavwrite
 from scipy.io.wavfile import read as wavread
 from os.path import join as opj
 from os.path import expanduser as ope
+from __future__ import print_function
 
 
 def list_wavs_in_dir(dirname):
@@ -120,6 +121,6 @@ def load_stimuli(stimHz, audioSamplingRate, audStimDur_sec,
             wavwrite(bothChanStr, 44100, scaled)
 
     except:
-        print "Unknown error encountered, check WAV files are OK?"
+        print("Unknown error encountered, check WAV files are OK?")
 
     return retval
