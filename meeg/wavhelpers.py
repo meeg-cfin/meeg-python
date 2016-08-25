@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """DOCUMENTATION MISSING! (both at module and method levels)
 """
+from __future__ import print_function
 import glob
 import numpy as np
 from scipy.io.wavfile import write as wavwrite
 from scipy.io.wavfile import read as wavread
 from os.path import join as opj
 from os.path import expanduser as ope
-from __future__ import print_function
 
 
 def list_wavs_in_dir(dirname):
