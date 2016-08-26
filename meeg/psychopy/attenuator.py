@@ -1,17 +1,19 @@
 from __future__ import print_function
 import numpy as np
 import time
-from labjack import u3
-from psychopy import parallel
+from psychopy import parallel  # this is OK, since part of psychopy
 
 
 class U3Port():
+    # Have to ensure u3 isn't imported unless the U3Port is explicitly needed
+    from labjack import u3  # noqa
+
     def __init__(self):
 
-        self.u3dev = u3.U3()
+        self.u3dev = u3.U3()  # noqa
 
     def setData(self, code=0):
-        self.u3dev.getFeedback(u3.PortStateWrite([0x00, code, 0x00]))
+        self.u3dev.getFeedback(u3.PortStateWrite([0x00, code, 0x00]))  # noqa
 
 
 class LPTPort():
