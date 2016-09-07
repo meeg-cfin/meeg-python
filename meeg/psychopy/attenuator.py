@@ -58,7 +58,7 @@ class AttenuatorController():
             "Trying to change volume beyond limits (-105 to 0 dB) " + \
             "is not possible!"
 
-    def _sendCode(self, code=4, duration=0.001):
+    def _sendCode(self, code=4, duration=1e-6):
         self.port.setData(code)  # Set to code, 4 resets to zero
         time.sleep(duration)
         self.port.setData(0)  # Set to zero
