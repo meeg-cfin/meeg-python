@@ -24,6 +24,11 @@ def get_wav(fname):
                          "{:.1f} kHz".format(Fs/1000.0))
     if len(data.shape) == 1:
         data = data[np.newaxis, :]  # make mono files 2D
+    elif len(data.shape) == 2:
+        if data.shape[0] != 2 and data.shape[1] == 2:
+            data = data.T  # make all stereo wav's [2 x times]
+        else:
+            raise(RuntimeError('Data shape unknown'))
     return data
 
 
