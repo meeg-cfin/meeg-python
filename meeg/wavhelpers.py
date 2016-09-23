@@ -41,9 +41,11 @@ def wavlist_to_wavarr(wavlist):
     wavlens.sort()
     max_wavlen = wavlens[-1]
     for ii in range(len(wavlist)):
-        wavlist[ii] = np.c_[wavlist[ii],
-                            np.array([0]*(max_wavlen - wavlist[ii].shape[1]),
-                            ndmin=2, dtype=np.int16)]
+        zeros = np.array([0]*(max_wavlen - wavlist[ii].shape[1]),
+                         ndmin=2, dtype=np.int16)
+        if wavlist[ii].shape[0] == 2:  # stereo
+            zeros = np.r_[zeros, zeros]
+        wavlist[ii] = np.c_[wavlist[ii], zeros]
     return np.array(wavlist)
 
 
