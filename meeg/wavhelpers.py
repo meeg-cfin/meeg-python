@@ -24,6 +24,11 @@ def get_wav(fname):
                          "{:.1f} kHz".format(Fs/1000.0))
     if len(data.shape) == 1:
         data = data[np.newaxis, :]  # make mono files 2D
+    elif len(data.shape) == 2:
+        if data.shape[0] != 2 and data.shape[1] == 2:
+            data = data.T  # make all stereo wav's [2 x times]
+        else:
+            raise(RuntimeError('Data shape unknown'))
     return data
 
 
@@ -36,9 +41,11 @@ def wavlist_to_wavarr(wavlist):
     wavlens.sort()
     max_wavlen = wavlens[-1]
     for ii in range(len(wavlist)):
-        wavlist[ii] = np.c_[wavlist[ii],
-                            np.array([0]*(max_wavlen - wavlist[ii].shape[1]),
-                            ndmin=2, dtype=np.int16)]
+        zeros = np.array([0]*(max_wavlen - wavlist[ii].shape[1]),
+                         ndmin=2, dtype=np.int16)
+        if wavlist[ii].shape[0] == 2:  # stereo
+            zeros = np.r_[zeros, zeros]
+        wavlist[ii] = np.c_[wavlist[ii], zeros]
     return np.array(wavlist)
 
 
