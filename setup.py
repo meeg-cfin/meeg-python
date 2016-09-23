@@ -15,7 +15,6 @@ setup(name='meeg',
       license='BSD',
       url='https://github.com/meeg-cfin/meeg-python',
       packages=['meeg'],
-      install_requires=['mne'],
       classifiers=[
           'Programming Language :: Python :: 3',
           'License :: OSI Approved :: BSD License'])
