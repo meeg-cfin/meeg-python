@@ -24,7 +24,7 @@ def _find_analogue_trigger_limit(ana_data):
     return 2.5*ana_data.mean()
 
 
-def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.2):
+def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0):
     epochs = Epochs(raw, events, tmin=tmin, tmax=tmax, picks=anapick,
                     baseline=(None, 0), preload=True)
     epochs._data = np.sqrt(epochs._data**2)  # RECTIFY!
