@@ -24,7 +24,7 @@ def _find_analogue_trigger_limit(ana_data):
     return 2.5*ana_data.mean()
 
 
-def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.2):
+def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0):
     epochs = Epochs(raw, events, tmin=tmin, tmax=tmax, picks=anapick,
                     baseline=(None, 0), preload=True)
     epochs._data = np.sqrt(epochs._data**2)  # RECTIFY!
@@ -36,7 +36,8 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.2):
 
 
 def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
-                   trig_codes=None, plot_figures=True, crop_plot_time=None):
+                   trig_codes=None, baseline=(-0.100, 0),
+                   plot_figures=True, crop_plot_time=None):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -49,6 +50,9 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         Default misc channel is 'MISC001' (default, usually visual)
     trig_codes : int | list of int
         Trigger values to compare analogue signal to
+    baseline : tuple of int
+        Pre- and post-trigger time to calculate trigger limits from.
+        Defaults to (-0.100, 0.)
     plot_figures : bool
         Plot histogram and "ERP image" of delays (default: True)
     crop_plot_time : tuple, optional
@@ -65,7 +69,10 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     pick = pick_channels(raw.info['ch_names'], include=[misc_chan])
 
     ana_data = np.sqrt(raw._data[pick, :].squeeze()**2)  # rectify!
-    offlevel, onlimit = _find_analogue_trigger_limit_sd(raw, events, pick)
+
+    tmin, tmax = baseline
+    offlevel, onlimit = _find_analogue_trigger_limit_sd(raw, events, pick,
+                                                        tmin=tmin, tmax=tmax)
 
     for row, unpack_me in enumerate(events):
         ind, before, after = unpack_me
