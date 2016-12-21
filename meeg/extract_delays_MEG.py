@@ -64,7 +64,7 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     """
     raw = Raw(raw_fname, preload=True)
     if l_freq is not None or h_freq is not None:
-        picks = pick_types(misc=True)
+        picks = pick_types(raw.info, misc=True)
         raw.filter(l_freq, h_freq, picks=picks)
 
     if trig_codes is not None:
