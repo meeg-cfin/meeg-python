@@ -1,4 +1,4 @@
-from mne import find_events, pick_channels, pick_events, Epochs
+from mne import find_events, pick_channels, pick_types, pick_events, Epochs
 from mne.io import Raw
 import numpy as np
 
@@ -36,8 +36,8 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0):
 
 
 def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
-                   trig_codes=None, baseline=(-0.100, 0),
-                   plot_figures=True, crop_plot_time=None):
+                   trig_codes=None, baseline=(-0.100, 0), l_freq=None,
+                   h_freq=None, plot_figures=True, crop_plot_time=None):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -53,12 +53,19 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     baseline : tuple of int
         Pre- and post-trigger time to calculate trigger limits from.
         Defaults to (-0.100, 0.)
+    l_freq : float | None
+        Low cut-off frequency in Hz. Uses mne.io.Raw.filter.
+    h_freq : float | None
+        High cut-off frequency in Hz. Uses mne.io.Raw.filter.
     plot_figures : bool
         Plot histogram and "ERP image" of delays (default: True)
     crop_plot_time : tuple, optional
         A 2-tuple with (tmin, tmax) being the limits to plot in the figure
     """
     raw = Raw(raw_fname, preload=True)
+    if l_freq is not None or h_freq is not None:
+        picks = pick_types(raw.info, misc=True)
+        raw.filter(l_freq, h_freq, picks=picks)
 
     if trig_codes is not None:
         include_trigs = trig_codes  # do some checking here!
