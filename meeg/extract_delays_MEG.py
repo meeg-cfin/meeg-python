@@ -3,21 +3,23 @@ from mne.io import Raw
 import numpy as np
 
 
-def _next_crossing(a, offlevel, onlimit):
+def _next_crossing(a, offlevel, onlimit, row, ind, val):
     try:
         trig = np.where(np.abs(a - offlevel) >=
                         np.abs(onlimit - offlevel))[0][0]
     except IndexError:
         raise RuntimeError('ERROR: No analogue trigger found within %d '
-                           'samples of the digital trigger' % len(a))
+                           'samples of the digital trigger %d, event '
+                           ' number %d, at %d samples into the file'
+                           % (len(a), val, row, ind))
     else:
         return(trig)
 
 
 def _find_next_analogue_trigger(ana_data, ind, offlevel, onlimit,
-                                maxdelay_samps=100):
+                                maxdelay_samps=100, row, val):
     return _next_crossing(ana_data[ind:ind + maxdelay_samps].squeeze(),
-                          offlevel, onlimit)
+                          offlevel, onlimit, row, ind, val)
 
 
 def _find_analogue_trigger_limit(ana_data):
@@ -86,7 +88,8 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         raw_ind = ind - raw.first_samp  # really indices into raw!
         anatrig_ind = _find_next_analogue_trigger(ana_data, raw_ind,
                                                   offlevel, onlimit,
-                                                  maxdelay_samps=1000)
+                                                  maxdelay_samps=1000,
+                                                 row, val=after)
         delays[row] = anatrig_ind / raw.info['sfreq'] * 1.e3
 
     if plot_figures:
