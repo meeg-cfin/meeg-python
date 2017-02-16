@@ -76,6 +76,8 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     events = pick_events(find_events(raw, stim_channel=stim_chan,
                                      min_duration=0.002),
                          include=include_trigs)
+    if time_shift is not None:
+        events[:, 0] += int(time_shift * raw.info['sfreq'])
     delays = np.zeros(events.shape[0])
     pick = pick_channels(raw.info['ch_names'], include=[misc_chan])
 
