@@ -38,7 +38,8 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0,
 
 def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
                    trig_codes=None, baseline=(-0.100, 0), l_freq=None,
-                   h_freq=None, plot_figures=True, crop_plot_time=None):
+                   h_freq=None, plot_figures=True, crop_plot_time=None,
+                   time_shift=None):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -62,6 +63,8 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         Plot histogram and "ERP image" of delays (default: True)
     crop_plot_time : tuple, optional
         A 2-tuple with (tmin, tmax) being the limits to plot in the figure
+    time_shift : None | float
+        Shift event markers by specified amount of time in seconds (or None)
     """
     raw = Raw(raw_fname, preload=True)
     if l_freq is not None or h_freq is not None:
