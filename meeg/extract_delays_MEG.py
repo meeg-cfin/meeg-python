@@ -6,7 +6,7 @@ import numpy as np
 def _next_crossing(a, offlevel, onlimit):
     try:
         trig = np.where(np.abs(a - offlevel) >=
-                        np.abs(onlimit - offlevel))[0][0]
+                        np.abs(onlimit))[0][0]
     except IndexError:
         raise RuntimeError('ERROR: No analogue trigger found within %d '
                            'samples of the digital trigger' % len(a))
@@ -24,14 +24,15 @@ def _find_analogue_trigger_limit(ana_data):
     return 2.5*ana_data.mean()
 
 
-def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0):
+def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0,
+                                    sd_limit=5.):
     epochs = Epochs(raw, events, tmin=tmin, tmax=tmax, picks=anapick,
                     baseline=(None, 0), preload=True)
     epochs._data = np.sqrt(epochs._data**2)  # RECTIFY!
     ave = epochs.average(picks=[0])
     sde = epochs.standard_error(picks=[0])
     return(ave.data.mean(),
-           5.0 * sde.data[0, np.where(sde.times < 0)].mean() *
+           sd_limit * sde.data[0, np.where(sde.times < 0)].mean() *
            np.sqrt(epochs.events.shape[0]))
 
 
@@ -84,9 +85,14 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     for row, unpack_me in enumerate(events):
         ind, before, after = unpack_me
         raw_ind = ind - raw.first_samp  # really indices into raw!
-        anatrig_ind = _find_next_analogue_trigger(ana_data, raw_ind,
-                                                  offlevel, onlimit,
-                                                  maxdelay_samps=1000)
+        try:
+            anatrig_ind = _find_next_analogue_trigger(ana_data, raw_ind,
+                                                      offlevel, onlimit,
+                                                      maxdelay_samps=1000)
+        except RuntimeError as e:
+            extra_info = ('Event #{:d} of category {:d}, at {:d} samples into '
+                          'the file'.format(row, after, ind))
+            raise RuntimeError('{}\n{}'.format(e, extra_info))
         delays[row] = anatrig_ind / raw.info['sfreq'] * 1.e3
 
     if plot_figures:
