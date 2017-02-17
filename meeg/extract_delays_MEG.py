@@ -36,10 +36,21 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0,
            np.sqrt(epochs.events.shape[0]))
 
 
+def _filter_events_too_close(events, min_samps):
+    filtered_events = []
+    prev_eve = 0
+    for eve in events:
+        if eve[0] - prev_eve >= min_samps:
+            filtered_events.append(eve)
+        prev_eve = eve[0]
+    print('{} events remain after filtering.'.format(len(filtered_events)))
+    return(np.array(filtered_events))
+
+
 def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
                    trig_codes=None, baseline=(-0.100, 0), l_freq=None,
                    h_freq=None, plot_figures=True, crop_plot_time=None,
-                   time_shift=None):
+                   time_shift=None, min_separation=None):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -65,6 +76,9 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         A 2-tuple with (tmin, tmax) being the limits to plot in the figure
     time_shift : None | float
         Shift event markers by specified amount of time in seconds (or None)
+    min_separation : None | float
+        Minimum allowed separation of successive triggers used for delay
+        estimation (in seconds).
     """
     raw = Raw(raw_fname, preload=True)
     if l_freq is not None or h_freq is not None:
@@ -76,6 +90,9 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     events = pick_events(find_events(raw, stim_channel=stim_chan,
                                      min_duration=0.002),
                          include=include_trigs)
+    if min_separation is not None:
+        events = _filter_events_too_close(
+                    events, int(min_separation * raw.info['sfreq']))
     if time_shift is not None:
         events[:, 0] += int(time_shift * raw.info['sfreq'])
     delays = np.zeros(events.shape[0])
