@@ -37,6 +37,11 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0,
 
 
 def _filter_events_too_close(events, min_samps):
+    """Filter out events based on proximity to previous events.
+
+    Potentially useful when presenting rapid stimuli, and want
+    e.g. delay estimation to be based on the first in a block only.
+    """
     filtered_events = []
     prev_eve = 0
     for eve in events:
