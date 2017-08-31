@@ -55,7 +55,8 @@ def _filter_events_too_close(events, min_samps):
 def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
                    trig_codes=None, baseline=(-0.100, 0), l_freq=None,
                    h_freq=None, plot_figures=True, crop_plot_time=None,
-                   time_shift=None, min_separation=None):
+                   time_shift=None, min_separation=None,
+                   return_values='delays', trig_limit_sd=5.):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -66,8 +67,9 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         Default stim channel is 'STI101'
     misc_chan : str
         Default misc channel is 'MISC001' (default, usually visual)
-    trig_codes : int | list of int
-        Trigger values to compare analogue signal to
+    trig_codes : int | list of int | None
+        Trigger values to compare analogue signal to. If None (default), all
+        trigger codes will be used.
     baseline : tuple of int
         Pre- and post-trigger time to calculate trigger limits from.
         Defaults to (-0.100, 0.)
@@ -84,7 +86,26 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     min_separation : None | float
         Minimum allowed separation of successive triggers used for delay
         estimation (in seconds).
+    return_values : str
+        What should the function return? Valid options are 'delays' for an
+        array of delay values in milliseconds, or 'events' for a timing-
+        corrected trigger events array (mne-style). Note that trigger codes
+        note specified in `trig_codes` are removed from the events array.
+        Defaults to 'delays'.
+    trig_limit_sd : float
+        For debugging only.
+
+    Returns (see `return_values`-parameter)
+    -------
+    delays : ndarray
+        Estimated delay values (in ms).
+    events : n x 3 ndarray
+        Corrected events matrix for triggers in `trig_codes`. NB: The second
+        column of the array contains the amount of samples used for correction.
     """
+    if return_values not in ['events', 'delays']:
+        raise ValueError('Invalid return_value: {}'.format(return_values))
+
     raw = Raw(raw_fname, preload=True)
     if l_freq is not None or h_freq is not None:
         picks = pick_types(raw.info, misc=True)
@@ -100,14 +121,23 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
                     events, int(min_separation * raw.info['sfreq']))
     if time_shift is not None:
         events[:, 0] += int(time_shift * raw.info['sfreq'])
-    delays = np.zeros(events.shape[0])
+
+    delay_samps = np.zeros(events.shape[0], dtype=events.dtype)
     pick = pick_channels(raw.info['ch_names'], include=[misc_chan])
 
     ana_data = np.sqrt(raw._data[pick, :].squeeze()**2)  # rectify!
 
+    # don't use all events for trigger level determination (memory-heavy)
+    if len(events) > 300:
+        decim_eve = int(len(events) / 300.)
+        print('Warning: Using only every {}th event for trigger limit '
+              'calculations'.format(decim_eve))
+    # from IPython.core.debugger import set_trace; set_trace()
     tmin, tmax = baseline
-    offlevel, onlimit = _find_analogue_trigger_limit_sd(raw, events, pick,
-                                                        tmin=tmin, tmax=tmax)
+    offlevel, onlimit = \
+        _find_analogue_trigger_limit_sd(raw, events[::decim_eve], pick,
+                                        tmin=tmin, tmax=tmax,
+                                        sd_limit=trig_limit_sd)
 
     for row, unpack_me in enumerate(events):
         ind, before, after = unpack_me
@@ -118,9 +148,11 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
                                                       maxdelay_samps=1000)
         except RuntimeError as e:
             extra_info = ('Event #{:d} of category {:d}, at {:d} samples into '
-                          'the file'.format(row, after, ind))
+                          'the file'.format(row, after, raw_ind))
             raise RuntimeError('{}\n{}'.format(e, extra_info))
-        delays[row] = anatrig_ind / raw.info['sfreq'] * 1.e3
+        delay_samps[row] = anatrig_ind
+
+        delays = delay_samps / raw.info['sfreq'] * 1.e3
 
     if plot_figures:
         import matplotlib.pyplot as plt
@@ -137,15 +169,22 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
         epochs.plot_image(pick, fig=imgfig)
         # mnefig[0].get_axes()[1].set_title('')
 
-    stats = dict()
-    stats['mean'] = np.mean(delays)
-    stats['std'] = np.std(delays)
-    stats['median'] = np.median(delays)
-    stats['q10'] = np.percentile(delays, 10.)
-    stats['q90'] = np.percentile(delays, 90.)
-    stats['max_amp'] = np.max(epochs._data[:, pick, :])  # ovr epochs & times
-    stats['min_amp'] = np.min(epochs._data[:, pick, :])  # ovr epochs & times
-    return(delays, stats)
+        stats = dict()
+        stats['mean'] = np.mean(delays)
+        stats['std'] = np.std(delays)
+        stats['median'] = np.median(delays)
+        stats['q10'] = np.percentile(delays, 10.)
+        stats['q90'] = np.percentile(delays, 90.)
+        stats['max_amp'] = np.max(epochs._data[:, pick, :])  # ovr epochs&times
+        stats['min_amp'] = np.min(epochs._data[:, pick, :])  # ovr epochs&times
+        print(stats)
+
+    if return_values == 'events':
+        events[:, 0] += delay_samps  # these are of same dtype
+        events[:, 1] = delay_samps  # might as well keep the correction terms!
+        return(events)
+    elif return_values == 'delays':
+        return(delays)
 
 if __name__ == '__main__':
     from stormdb.access import Query
