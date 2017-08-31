@@ -5,3 +5,7 @@
 # to import modules, one must therefore be explicit, such as
 # from meeg import wavhelpers
 # from meeg.psychopy_utils import attenuator
+from .extract_delays_MEG import extract_delays
+
+from . import extract_delays_MEG
+from . import wavhelpers
