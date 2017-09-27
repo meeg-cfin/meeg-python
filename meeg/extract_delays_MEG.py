@@ -1,5 +1,6 @@
 from mne import find_events, pick_channels, pick_types, pick_events, Epochs
-from mne.io import Raw
+from mne.io import Raw, read_raw_fif
+from six import string_types
 import numpy as np
 
 
@@ -52,7 +53,7 @@ def _filter_events_too_close(events, min_samps):
     return(np.array(filtered_events))
 
 
-def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
+def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
                    trig_codes=None, baseline=(-0.100, 0), l_freq=None,
                    h_freq=None, plot_figures=True, crop_plot_time=None,
                    time_shift=None, min_separation=None,
@@ -61,8 +62,8 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
 
     Parameters
     ==========
-    raw_fname : str
-        Raw file name
+    raw : str | Raw
+        File name (string), or an instance of Raw.
     stim_chan : str
         Default stim channel is 'STI101'
     misc_chan : str
@@ -106,13 +107,20 @@ def extract_delays(raw_fname, stim_chan='STI101', misc_chan='MISC001',
     if return_values not in ['events', 'delays']:
         raise ValueError('Invalid return_value: {}'.format(return_values))
 
-    raw = Raw(raw_fname, preload=True)
+    if isinstance(raw, string_types):
+        raw = read_raw_fif(raw, preload=True)
+    elif isinstance(raw, Raw):
+        raw.load_data()  # does nothing if data already (pre)loaded
+    else:
+        raise ValueError('First argument should either be a Raw object, '
+                         'or a string containing the path to a file.')
+
     if l_freq is not None or h_freq is not None:
         picks = pick_types(raw.info, misc=True)
         raw.filter(l_freq, h_freq, picks=picks)
 
-    if trig_codes is not None:
-        include_trigs = trig_codes  # do some checking here!
+    include_trigs = trig_codes  # do some checking here!
+
     events = pick_events(find_events(raw, stim_channel=stim_chan,
                                      min_duration=0.002),
                          include=include_trigs)
