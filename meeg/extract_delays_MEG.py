@@ -136,6 +136,7 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
     ana_data = np.sqrt(raw._data[pick, :].squeeze()**2)  # rectify!
 
     # don't use all events for trigger level determination (memory-heavy)
+    decim_eve = 1
     if len(events) > 300:
         decim_eve = int(len(events) / 300.)
         print('Warning: Using only every {}th event for trigger limit '
