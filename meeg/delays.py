@@ -1,5 +1,5 @@
 from mne import find_events, pick_channels, pick_types, pick_events, Epochs
-from mne.io import Raw, read_raw_fif
+from mne.io import Raw, BaseRaw, read_raw_fif, read_raw_brainvision
 from six import string_types
 import numpy as np
 
@@ -108,8 +108,11 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         raise ValueError('Invalid return_value: {}'.format(return_values))
 
     if isinstance(raw, string_types):
-        raw = read_raw_fif(raw, preload=True)
-    elif isinstance(raw, Raw):
+        if raw.endswith('fif'):
+            raw = read_raw_fif(raw, preload=True)
+        elif raw.endswith('vhdr'):
+            raw = read_raw_brainvision(raw, misc=[misc_chan])
+    elif isinstance(raw, BaseRaw):
         raw.load_data()  # does nothing if data already (pre)loaded
     else:
         raise ValueError('First argument should either be a Raw object, '
@@ -121,8 +124,10 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
 
     include_trigs = trig_codes  # do some checking here!
 
+    # for MEG, use 2 ms, for EEG it's shorter!
+    min_duration = 0.002 if isinstance(raw, Raw) else 0
     events = pick_events(find_events(raw, stim_channel=stim_chan,
-                                     min_duration=0.002),
+                                     min_duration=min_duration),
                          include=include_trigs)
     if min_separation is not None:
         events = _filter_events_too_close(
@@ -194,6 +199,7 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         return(events)
     elif return_values == 'delays':
         return(delays)
+
 
 if __name__ == '__main__':
     from stormdb.access import Query
