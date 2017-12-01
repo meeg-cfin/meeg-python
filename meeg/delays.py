@@ -57,7 +57,8 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
                    trig_codes=None, baseline=(-0.100, 0), l_freq=None,
                    h_freq=None, plot_figures=True, crop_plot_time=None,
                    time_shift=None, min_separation=None,
-                   return_values='delays', trig_limit_sd=5.):
+                   return_values='delays', trig_limit_sd=5.,
+                   plot_title_str=None):
     """Estimate onset delay of analogue (misc) input relative to trigger
 
     Parameters
@@ -80,6 +81,9 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         High cut-off frequency in Hz. Uses mne.io.Raw.filter.
     plot_figures : bool
         Plot histogram and "ERP image" of delays (default: True)
+    plot_title_str : str | None
+        If None (default), the name of the channel is plotted above the
+        epochs-image. Alternatively, enter a string.
     crop_plot_time : tuple, optional
         A 2-tuple with (tmin, tmax) being the limits to plot in the figure
     time_shift : None | float
@@ -197,7 +201,8 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         if crop_plot_time is not None:
             epochs.crop(*crop_plot_time)
         epochs.plot_image(pick, axes=axes_list[:3])
-        # mnefig[0].get_axes()[1].set_title('')
+        if plot_title_str is not None:
+            axes_list[0].set_title(plot_title_str)
 
         stats = dict()
         stats['mean'] = np.mean(delays)
