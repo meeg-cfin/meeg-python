@@ -170,17 +170,33 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
 
     if plot_figures:
         import matplotlib.pyplot as plt
-        plt.ion()
-        fig, axs = plt.subplots(1, 1)
+        plt.figure()
+        evoked = True
+        hist = True
+        axes_list = []
 
-        axs.hist(delays)
-        axs.set_title('Delay histogram (ms)')
+        # image
+        axes_list.append(plt.subplot2grid(
+            (3, 14), (0, 0), colspan=10 if hist else 14,
+            rowspan=2 if evoked else 3))
+        # evoked
+        axes_list.append(plt.subplot2grid(
+            (3, 14), (2, 0), colspan=10 if hist else 14, rowspan=1))
+        # colorbar
+        axes_list.append(plt.subplot2grid((3, 14), (2, 10),
+                                          colspan=2, rowspan=1))
+        # histogram
+        axes_list.append(plt.subplot2grid(
+            (3, 14), (0, 10), colspan=4, rowspan=2))
 
-        imgfig, _ = plt.subplots(1, 2)
+        axes_list[-1].hist(delays, orientation=u'horizontal')
+        axes_list[-1].set_title('Delay histogram (ms)')
+        axes_list[-1].yaxis.tick_right()
+
         epochs = Epochs(raw, events, preload=True)
         if crop_plot_time is not None:
             epochs.crop(*crop_plot_time)
-        epochs.plot_image(pick, fig=imgfig)
+        epochs.plot_image(pick, axes=axes_list[:3])
         # mnefig[0].get_axes()[1].set_title('')
 
         stats = dict()
