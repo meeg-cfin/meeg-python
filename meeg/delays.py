@@ -93,7 +93,8 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         estimation (in seconds).
     return_values : str
         What should the function return? Valid options are 'delays' for an
-        array of delay values in milliseconds, or 'events' for a timing-
+        array of delay values in milliseconds, 'stats' for delay value
+        statistics on all triggers considered, or 'events' for a timing-
         corrected trigger events array (mne-style). Note that trigger codes
         note specified in `trig_codes` are removed from the events array.
         Defaults to 'delays'.
@@ -103,12 +104,14 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
     Returns (see `return_values`-parameter)
     -------
     delays : ndarray
-        Estimated delay values (in ms).
+        Estimated delay values (in ms) for each trigger.
+    stats : dict
+        Delay value statitics (in ms) for all triggers.
     events : n x 3 ndarray
         Corrected events matrix for triggers in `trig_codes`. NB: The second
         column of the array contains the amount of samples used for correction.
     """
-    if return_values not in ['events', 'delays']:
+    if return_values not in ['events', 'delays', 'stats']:
         raise ValueError('Invalid return_value: {}'.format(return_values))
 
     if isinstance(raw, string_types):
@@ -204,6 +207,13 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         if plot_title_str is not None:
             axes_list[0].set_title(plot_title_str)
 
+    if return_values == 'events':
+        events[:, 0] += delay_samps  # these are of same dtype
+        events[:, 1] = delay_samps  # might as well keep the correction terms!
+        return(events)
+    elif return_values == 'delays':
+        return(delays)
+    elif return_values == 'stats':
         stats = dict()
         stats['mean'] = np.mean(delays)
         stats['std'] = np.std(delays)
@@ -212,14 +222,8 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         stats['q90'] = np.percentile(delays, 90.)
         stats['max_amp'] = np.max(epochs._data[:, pick, :])  # ovr epochs&times
         stats['min_amp'] = np.min(epochs._data[:, pick, :])  # ovr epochs&times
-        print(stats)
+        return(stats)
 
-    if return_values == 'events':
-        events[:, 0] += delay_samps  # these are of same dtype
-        events[:, 1] = delay_samps  # might as well keep the correction terms!
-        return(events)
-    elif return_values == 'delays':
-        return(delays)
 
 
 if __name__ == '__main__':
