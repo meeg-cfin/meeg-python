@@ -1,0 +1,40 @@
+name: mne_py3
+channels:
+- defaults
+dependencies:
+- python=3.6.1
+- pip
+- mkl
+- numpy
+- scipy
+- matplotlib
+- pandas
+- scikit-learn
+- h5py
+- pillow
+- statsmodels
+- jupyter
+- nose
+- sphinx
+- joblib
+- psutil
+- numpydoc
+- flake8
+- spyder
+- pip:
+  - mne
+    #  - "git+https://github.com/enthought/traits.git"
+    #  - "git+https://github.com/enthought/pyface.git"
+    #  - "git+https://github.com/enthought/traitsui.git"
+    #  - "git+https://github.com/enthought/mayavi.git"
+  - "/public/meeg-python/traits.git"
+  - "/public/meeg-python/pyface.git"
+  - "/public/meeg-python/traitsui.git"
+  - "/public/meeg-python/mayavi.git"
+  - "git+https://github.com/nipy/PySurfer.git"
+  - nitime
+  - nibabel
+  - nilearn
+  - neo
+  - pyqt5
+  - vtk
