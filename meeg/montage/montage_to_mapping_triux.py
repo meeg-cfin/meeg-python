@@ -34,7 +34,7 @@ def read_eeg_mapping_triux(fname_map='easycap-Aar75-mapping'):
     """Read a mapping between Triux-style EEG channel names and 10/20 equivs.
     """
     try:
-        with open(op.join('data', fname_map + '.json'),
+        with open(op.join(op.dirname(__file__), 'data', fname_map + '.json'),
                   encoding='utf-8') as fp:
             return json.load(fp)
     except FileNotFoundError:
