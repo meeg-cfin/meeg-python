@@ -30,11 +30,16 @@ def montage_to_mapping_triux(fname_mon):
     return mapping
 
 
-def read_eeg_mapping_triux(fname_map):
+def read_eeg_mapping_triux(fname_map='easycap-Aar75-mapping'):
     """Read a mapping between Triux-style EEG channel names and 10/20 equivs.
     """
-    with open(fname_map, encoding='utf-8') as fp:
-        return json.load(fp)
+    try:
+        with open(op.join('data', fname_map + '.json'),
+                  encoding='utf-8') as fp:
+            return json.load(fp)
+    except FileNotFoundError:
+        with open(fname_map, encoding='utf-8') as fp:
+            return json.load(fp)
 
 
 if __name__ == '__main__':
