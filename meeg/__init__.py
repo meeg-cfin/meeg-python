@@ -9,3 +9,4 @@ from .delays import extract_delays
 
 from . import delays
 from . import wavhelpers
+from .montage import (montage_to_mapping_triux, read_eeg_mapping_triux)
