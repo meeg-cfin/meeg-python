@@ -32,6 +32,18 @@ def montage_to_mapping_triux(fname_mon):
 
 def read_eeg_mapping_triux(fname_map='easycap-Aar75-mapping'):
     """Read a mapping between Triux-style EEG channel names and 10/20 equivs.
+
+    Parameters
+    ----------
+    fname_map : str
+        EITHER: Full path to the .json-file containing an ordered mapping
+        between original channel names and the replacements.
+        OR: Name of existing mapping (default: 'easycap-Aar75-mapping')
+
+    Returns
+    -------
+    mapping : dict
+        The mapping between EEG channel index- and 10/20-based names.
     """
     try:
         with open(op.join(op.dirname(__file__), 'data', fname_map + '.json'),
