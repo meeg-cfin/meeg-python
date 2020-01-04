@@ -161,13 +161,17 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
                                         sd_limit=trig_limit_sd)
 
     for row, unpack_me in enumerate(events):
-        ind, before, after = unpack_me
+        ind, _, after = unpack_me
         raw_ind = ind - raw.first_samp  # really indices into raw!
         try:
             anatrig_ind = _find_next_analogue_trigger(ana_data, raw_ind,
                                                       offlevel, onlimit,
                                                       maxdelay_samps=1000)
         except RuntimeError as e:
+            # assume data collection ended after event, but before response
+            # continue silently
+            if row == (len(events) - 1):
+                continue
             extra_info = ('Event #{:d} of category {:d}, at {:d} samples into '
                           'the file'.format(row, after, raw_ind))
             raise RuntimeError('{}\n{}'.format(e, extra_info))
