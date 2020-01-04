@@ -191,21 +191,21 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
             (3, 14), (2, 0), colspan=10 if hist else 14, rowspan=1))
         # colorbar
         axes_list.append(plt.subplot2grid((3, 14), (2, 10),
-                                          colspan=2, rowspan=1))
+                                          colspan=1, rowspan=1))
         # histogram
         axes_list.append(plt.subplot2grid(
             (3, 14), (0, 10), colspan=4, rowspan=2))
 
         axes_list[-1].hist(delays, orientation=u'horizontal')
-        axes_list[-1].set_title('Delay histogram (ms)')
+        axes_list[-1].set_title('Delay values (ms)')
         axes_list[-1].yaxis.tick_right()
 
         epochs = Epochs(raw, events, preload=True)
         if crop_plot_time is not None:
             epochs.crop(*crop_plot_time)
-        epochs.plot_image(pick, axes=axes_list[:3])
-        if plot_title_str is not None:
-            axes_list[0].set_title(plot_title_str)
+        # This calls plt.show, which in inline-plotting settings causes the
+        # figure to be burnt in. All axes mods have to happen prior to it.
+        epochs.plot_image(pick, axes=axes_list[:3], title=plot_title_str)
 
     if return_values == 'events':
         events[:, 0] += delay_samps  # these are of same dtype
