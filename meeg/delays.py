@@ -54,7 +54,8 @@ def _filter_events_too_close(events, min_samps):
 
 
 def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
-                   trig_codes=None, baseline=(-0.100, 0), l_freq=None,
+                   trig_codes=None, epoch_t_max=0.5,
+                   baseline=(-0.100, 0), l_freq=None,
                    h_freq=None, plot_figures=True, crop_plot_time=None,
                    time_shift=None, min_separation=None,
                    return_values='delays', trig_limit_sd=5.,
@@ -75,6 +76,9 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
     baseline : tuple of int
         Pre- and post-trigger time to calculate trigger limits from.
         Defaults to (-0.100, 0.)
+    epoch_t_max : float
+        Time after trigger to include in epoch (relevant for plotting).
+        Defaults to 0.5 sec
     l_freq : float | None
         Low cut-off frequency in Hz. Uses mne.io.Raw.filter.
     h_freq : float | None
@@ -138,7 +142,7 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
                          include=include_trigs)
     if min_separation is not None:
         events = _filter_events_too_close(
-                    events, int(min_separation * raw.info['sfreq']))
+            events, int(min_separation * raw.info['sfreq']))
     if time_shift is not None:
         events[:, 0] += int(time_shift * raw.info['sfreq'])
 
@@ -204,9 +208,15 @@ def extract_delays(raw, stim_chan='STI101', misc_chan='MISC001',
         axes_list[-1].set_title('Delay values (ms)')
         axes_list[-1].yaxis.tick_right()
 
-        epochs = Epochs(raw, events, preload=True)
         if crop_plot_time is not None:
-            epochs.crop(*crop_plot_time)
+            if not (isinstance(crop_plot_time, (list, tuple)) and
+                    len(crop_plot_time) == 2):
+                raise RuntimeError('crop_plot_time must be length-2 tuple')
+            epo_t_min, epo_t_max = crop_plot_time
+        else:
+            epo_t_min, epo_t_max = -0.2, 0.5
+        epochs = Epochs(raw, events, tmax=epo_t_max, preload=True)
+        epochs.crop(epo_t_min, epo_t_max)
         # This calls plt.show, which in inline-plotting settings causes the
         # figure to be burnt in. All axes mods have to happen prior to it.
         epochs.plot_image(pick, axes=axes_list[:3], title=plot_title_str)
