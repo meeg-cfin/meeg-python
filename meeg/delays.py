@@ -30,11 +30,10 @@ def _find_analogue_trigger_limit_sd(raw, events, anapick, tmin=-0.2, tmax=0.0,
     epochs = Epochs(raw, events, tmin=tmin, tmax=tmax, picks=anapick,
                     baseline=(None, 0), preload=True)
     epochs._data = np.sqrt(epochs._data**2)  # RECTIFY!
-    ave = epochs.average(picks=[0])
-    sde = epochs.standard_error(picks=[0])
-    return(ave.data.mean(),
-           sd_limit * sde.data[0, np.where(sde.times < 0)].mean() *
-           np.sqrt(epochs.events.shape[0]))
+    # ave = epochs.average(picks=[0])
+    ave = np.mean(np.mean(epochs.get_data(), axis=2))
+    std = np.mean(np.std(epochs.get_data(), axis=2))
+    return(ave, sd_limit * std)
 
 
 def _filter_events_too_close(events, min_samps):
